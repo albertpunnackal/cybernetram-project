@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="d-flex justify-content-center align-items-center" style="min-height: 60vh;">
+    <!-- Simple fallback result card -->
+    <div class="card text-center p-5 shadow border-0" style="max-width: 600px;">
+        
+        <!-- Logic to choose color -->
+        {% if color == 'success' %}
+            <div class="mb-3"><i class="fas fa-check-circle fa-4x text-success"></i></div>
+            <h1 class="text-success display-5 fw-bold">{{ title }}</h1>
+        {% elif color == 'danger' %}
+            <div class="mb-3"><i class="fas fa-times-circle fa-4x text-danger"></i></div>
+            <h1 class="text-danger display-5 fw-bold">{{ title }}</h1>
+        {% else %}
+            <div class="mb-3"><i class="fas fa-exclamation-triangle fa-4x text-warning"></i></div>
+            <h1 class="text-warning display-5 fw-bold">{{ title }}</h1>
+        {% endif %}
+
+        <p class="lead text-muted mt-3">{{ msg }}</p>
+        
+        <div class="mt-4">
+            <a href="/inbox" class="btn btn-outline-dark rounded-pill px-4">Return to Inbox</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

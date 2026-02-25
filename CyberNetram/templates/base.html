@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CyberNetram | Security Operations</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Tech Look) -->
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- GLOBAL THEME VARIABLES --- */
+        :root {
+            --bg-body: #000000;       /* Pure Black */
+            --bg-card: rgba(20, 20, 25, 0.6); /* Glassy Dark */
+            --text-main: #ffffff;
+            --text-muted: #a0a0a0;
+            --accent-violet: #8a2be2;
+            --accent-cyan: #00f3ff;
+            --border-color: rgba(138, 43, 226, 0.2);
+        }
+
+        /* --- GLOBAL STYLES --- */
+        body { 
+            background-color: var(--bg-body); 
+            /* The Unified Violet/Black Gradient */
+            background-image: radial-gradient(circle at 50% -20%, #2e003e 0%, #000000 60%);
+            background-attachment: fixed;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif; 
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            
+            /* Custom Scrollbar */
+            scrollbar-width: thin;
+            scrollbar-color: var(--accent-violet) #000;
+        }
+
+        /* Custom Scrollbar for Chrome/Safari */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #000; }
+        ::-webkit-scrollbar-thumb { background: var(--accent-violet); border-radius: 4px; }
+
+        /* Bootstrap Overrides for Dark Mode */
+        .text-dark { color: #f1f5f9 !important; }
+        .text-muted { color: #94a3b8 !important; }
+        .bg-white { background-color: #1e293b !important; }
+        .bg-light { background-color: rgba(255, 255, 255, 0.05) !important; color: white !important; }
+
+        /* --- THREAT TICKER --- */
+        .threat-ticker {
+            background: rgba(0,0,0,0.9);
+            color: var(--accent-cyan);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            padding: 6px 0;
+            overflow: hidden;
+            white-space: nowrap;
+            border-bottom: 1px solid rgba(0, 243, 255, 0.2);
+            z-index: 2000;
+        }
+        .ticker-content {
+            display: inline-block;
+            animation: scroll-left 30s linear infinite;
+        }
+        @keyframes scroll-left {
+            0% { transform: translateX(100%); }
+            100% { transform: translateX(-100%); }
+        }
+
+        /* --- NAVBAR (Glassmorphism) --- */
+        .navbar {
+            background-color: rgba(10, 5, 20, 0.8) !important;
+            backdrop-filter: blur(15px);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+            z-index: 1000;
+        }
+        .navbar-brand {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 800;
+            letter-spacing: 1px;
+            font-size: 1.4rem;
+            color: white !important;
+            text-shadow: 0 0 15px var(--accent-violet);
+        }
+        .nav-link {
+            color: #ccc !important;
+            font-weight: 500;
+            margin-left: 20px;
+            transition: 0.3s;
+            font-size: 0.95rem;
+        }
+        .nav-link:hover, .nav-link:focus {
+            color: var(--accent-cyan) !important;
+            text-shadow: 0 0 10px rgba(0, 243, 255, 0.6);
+            transform: translateY(-2px);
+        }
+        
+        /* --- CARDS (Global) --- */
+        .card { 
+            background: var(--bg-card);
+            backdrop-filter: blur(10px);
+            color: var(--text-main);
+            border: 1px solid var(--border-color); 
+            border-radius: 20px; 
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5); 
+        }
+
+        /* Footer */
+        footer { 
+            background: rgba(0,0,0,0.8); 
+            color: var(--text-muted); 
+            margin-top: auto; 
+            border-top: 1px solid var(--border-color); 
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+        }
+
+        /* Utility for Buttons */
+        .btn-primary {
+            background: linear-gradient(135deg, #6a11cb, #2575fc);
+            border: none;
+            box-shadow: 0 4px 15px rgba(37, 117, 252, 0.3);
+        }
+        .btn-primary:hover {
+            box-shadow: 0 6px 20px rgba(37, 117, 252, 0.5);
+            transform: translateY(-2px);
+        }
+        .btn-outline-danger {
+            color: #ff0055; border-color: #ff0055;
+        }
+        .btn-outline-danger:hover {
+            background: #ff0055; color: white; box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- 1. THREAT TICKER -->
+    <div class="threat-ticker">
+        <div class="ticker-content">
+            ⚠️ ALERT: 'DarkGate' Malware detected in PDF attachments ... 🚨 PHISHING: Fake 'Zoom' invites targeting Universities ... 🛡️ STATUS: Global Threat Level ELEVATED ... 👁️ SYSTEM: CyberNetram Online.
+        </div>
+    </div>
+
+    <!-- 2. NAVIGATION -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <i class="fas fa-eye me-2" style="color: var(--accent-cyan);"></i>CYBERNETRAM
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
+                    <li class="nav-item"><a class="nav-link" href="/inbox"><i class="fas fa-envelope-open-text me-2"></i>Inbox</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/scan"><i class="fas fa-biohazard me-2"></i>Scanner</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/password"><i class="fas fa-key me-2"></i>Auditor</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/learn"><i class="fas fa-brain me-2"></i>Intel</a></li>
+                    <li class="nav-item ms-3"><a class="btn btn-sm btn-outline-warning fw-bold rounded-pill px-4" href="/quiz"><i class="fas fa-trophy me-2"></i>Arena</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="text-center py-4">
+        <span style="color: var(--accent-cyan);">[SECURE CONNECTION ESTABLISHED]</span><br>
+        <span class="opacity-50">© 2026 CyberNetram | Localized Threat Defense</span>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

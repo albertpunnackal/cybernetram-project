@@ -1,0 +1,601 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- IMPORT P5.JS LIBRARY -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.js"></script>
+
+<style>
+{% raw %}
+    /* --- PAGE OVERRIDES --- */
+    nav.navbar { display: none !important; }
+    
+    body {
+        background: black;
+        color: white;
+        overflow-x: hidden;
+        scrollbar-width: thin;
+        scrollbar-color: #ff00ff #000;
+    }
+
+    /* --- CURSOR GRID EFFECT --- */
+    #cursor-grid {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1; 
+        pointer-events: none; 
+        opacity: 0.3;
+        mix-blend-mode: screen; 
+    }
+
+    /* --- HERO SECTION --- */
+    .hero-section {
+        height: 100vh;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: fixed;
+        top: 0;
+        left: 0;
+        background: radial-gradient(circle at center, rgba(20, 5, 30, 0.9) 0%, rgba(0, 0, 0, 0.98) 80%);
+        z-index: 100;
+        transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        perspective: 1000px;
+    }
+
+    /* THE EYE WRAPPER - Scaled to match the massive reference image */
+    .eye-wrapper {
+        width: 800px; 
+        max-width: 95vw; 
+        height: 700px;
+        position: relative;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: all 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        z-index: 101;
+        margin-top: -30px;
+    }
+
+    /* Ambient background light spreading behind the eye */
+    .ambient-glow {
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        background: radial-gradient(circle at center, rgba(255, 0, 255, 0.15) 0%, rgba(0, 255, 255, 0.1) 40%, transparent 70%);
+        z-index: -1;
+        pointer-events: none;
+        animation: pulseGlow 4s infinite alternate;
+    }
+
+    @keyframes pulseGlow {
+        0% { transform: scale(0.95); opacity: 0.7; }
+        100% { transform: scale(1.05); opacity: 1; }
+    }
+
+    /* P5.JS CONTAINER STYLING */
+    #p5-eye-container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        transition: transform 0.1s ease-out; 
+        /* Removed CSS drop-shadow here to prevent massive rendering lag */
+    }
+
+    #p5-eye-container canvas {
+        width: 100% !important;
+        height: 100% !important;
+        object-fit: contain;
+    }
+
+    .hero-title {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 3.5rem;
+        font-weight: 800;
+        letter-spacing: 18px;
+        margin-top: -30px;
+        color: white;
+        text-transform: uppercase;
+        background: linear-gradient(90deg, #fff, #ff00ff, #00ffff, #fff);
+        background-size: 200%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        animation: shine 6s infinite linear;
+        transition: all 0.8s;
+        text-align: center;
+        z-index: 102;
+    }
+
+    .scroll-hint {
+        position: absolute;
+        bottom: 30px;
+        text-align: center;
+        opacity: 0.6;
+        animation: float 2s infinite ease-in-out;
+        transition: opacity 0.5s;
+        z-index: 102;
+    }
+
+    /* --- SCROLLED STATE --- */
+    body.scrolled .hero-section {
+        height: 90px;
+        flex-direction: row; 
+        justify-content: center;
+        align-items: center;
+        gap: 20px;
+        background: rgba(10, 0, 15, 0.95);
+        border-bottom: 1px solid rgba(255, 0, 255, 0.3);
+        backdrop-filter: blur(15px);
+    }
+
+    body.scrolled .eye-wrapper {
+        width: 60px;
+        height: 60px;
+        margin: 0;
+    }
+    
+    body.scrolled .ambient-glow { display: none; }
+    body.scrolled #p5-eye-container { transform: none !important; }
+
+    body.scrolled .hero-title {
+        margin-top: 0;
+        font-size: 1.5rem;
+        letter-spacing: 5px;
+    }
+
+    body.scrolled .scroll-hint { opacity: 0; pointer-events: none; }
+
+    /* --- MODULES SECTION --- */
+    .content-wrapper {
+        margin-top: 100vh;
+        background: #05000a; 
+        position: relative;
+        z-index: 90;
+        min-height: 100vh;
+        padding-top: 150px;
+        padding-bottom: 50px;
+    }
+
+    .modules-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 0 40px;
+        opacity: 0;
+        transform: translateY(50px);
+        transition: all 1s ease;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 40px;
+    }
+
+    body.scrolled .modules-container {
+        opacity: 1;
+        transform: translateY(0);
+    }
+
+    /* --- HEXAGON CARD STYLING --- */
+    .module-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        width: 280px; 
+        transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        text-decoration: none; 
+    }
+
+    .module-item:hover {
+        transform: translateY(-15px);
+    }
+
+    .hex-wrapper {
+        width: 220px;
+        height: 254px; 
+        position: relative;
+        margin-bottom: 25px;
+        filter: drop-shadow(0 0 10px rgba(255, 0, 255, 0.3)); 
+        transition: filter 0.3s;
+    }
+
+    .hex-border {
+        position: absolute;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background: linear-gradient(45deg, #4b0082, #000); 
+        clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        z-index: 1;
+        transition: background 0.3s;
+    }
+
+    .hex-inner {
+        position: absolute;
+        top: 4px; left: 4px; right: 4px; bottom: 4px; 
+        background: #0a0011; 
+        clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+        z-index: 2;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        transition: background 0.3s;
+    }
+
+    .module-item:hover .hex-wrapper { filter: drop-shadow(0 0 25px var(--glow-color)); }
+    .module-item:hover .hex-border { background: var(--glow-color); }
+    .module-item:hover .hex-inner { background: radial-gradient(circle at center, rgba(30, 0, 40, 0.9), #000); }
+
+    .module-icon {
+        font-size: 3.5rem;
+        margin-bottom: 15px;
+        background: linear-gradient(135deg, #fff, #ccc);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        transition: 0.3s;
+    }
+
+    .module-title {
+        color: white;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 1.1rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        line-height: 1.2;
+    }
+
+    .module-desc {
+        color: #94a3b8;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        max-width: 240px;
+        transition: color 0.3s;
+    }
+    
+    .module-item:hover .module-desc { color: white; text-shadow: 0 0 10px rgba(255,255,255,0.3); }
+    .module-item:hover .module-icon { background: white; -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 20px white; }
+
+    @keyframes shine { 0% { background-position: -200%; } 100% { background-position: 200%; } }
+    @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(10px); } }
+{% endraw %}
+</style>
+
+<!-- BACKGROUND CANVAS -->
+<canvas id="cursor-grid"></canvas>
+
+<!-- HERO -->
+<div class="hero-section">
+    <div class="eye-wrapper" id="eyeWrapper">
+        <div class="ambient-glow"></div>
+        <!-- P5.JS SKETCH INJECTED HERE -->
+        <div id="p5-eye-container"></div>
+    </div>
+    
+    <div class="hero-title">CYBERNETRAM</div>
+    
+    <div class="scroll-hint text-white">
+        <small class="text-uppercase" style="letter-spacing: 2px; font-size: 0.7rem;">Scroll to Explore</small><br>
+        <i class="fas fa-chevron-down mt-2"></i>
+    </div>
+</div>
+
+<!-- MODULES CONTENT -->
+<div class="content-wrapper">
+    <div class="container px-5 mb-5 text-center">
+        <h6 class="text-uppercase" style="color: #ff00ff; letter-spacing: 3px;">System Modules</h6>
+        <h2 class="display-4 fw-bold">Defensive Capabilities</h2>
+    </div>
+
+    <div class="modules-container">
+        <a href="/password" class="module-item" style="--glow-color: #00ff88;">
+            <div class="hex-wrapper"><div class="hex-border"></div><div class="hex-inner">
+                <i class="fas fa-shield-alt module-icon"></i>
+                <div class="module-title">Credential<br>Auditor</div>
+            </div></div>
+            <div class="module-desc">Advanced entropy calculation & breach verification.</div>
+        </a>
+        <a href="/inbox" class="module-item" style="--glow-color: #00ffff;">
+            <div class="hex-wrapper"><div class="hex-border"></div><div class="hex-inner">
+                <i class="fas fa-envelope-open-text module-icon"></i>
+                <div class="module-title">Phishing<br>Simulator</div>
+            </div></div>
+            <div class="module-desc">High-fidelity simulation of social engineering threats.</div>
+        </a>
+        <a href="/scan" class="module-item" style="--glow-color: #ff00ff;">
+            <div class="hex-wrapper"><div class="hex-border"></div><div class="hex-inner">
+                <i class="fas fa-biohazard module-icon"></i>
+                <div class="module-title">Threat<br>Scanner</div>
+            </div></div>
+            <div class="module-desc">Hybrid analysis combining local heuristics & cloud.</div>
+        </a>
+        <a href="/learn" class="module-item" style="--glow-color: #8a2be2;">
+            <div class="hex-wrapper"><div class="hex-border"></div><div class="hex-inner">
+                <i class="fas fa-brain module-icon"></i>
+                <div class="module-title">Knowledge<br>Hub</div>
+            </div></div>
+            <div class="module-desc">Remediation database for Ransomware & Scams.</div>
+        </a>
+        <a href="/quiz" class="module-item" style="--glow-color: #ffea00;">
+            <div class="hex-wrapper"><div class="hex-border"></div><div class="hex-inner">
+                <i class="fas fa-trophy module-icon"></i>
+                <div class="module-title">Cyber<br>Arena</div>
+            </div></div>
+            <div class="module-desc">Gamified skill assessment. Earn the Cyber Ninja rank.</div>
+        </a>
+    </div>
+</div>
+
+<script>
+{% raw %}
+    /* =========================================
+       USER PROVIDED P5.JS SKETCH LOGIC
+       (Optimized for Performance)
+       ========================================= */
+    
+    let colorMagenta, colorCyan, colorPurple;
+
+    function setup() {
+        let canvas = createCanvas(900, 800);
+        canvas.parent('p5-eye-container');
+        angleMode(DEGREES);
+        
+        // Performance Fix: Forces standard pixel density on high-res screens
+        // High-DPI screens + heavy shadowBlur causes massive lag. This fixes it.
+        pixelDensity(1); 
+        
+        // Exact reference palette
+        colorMagenta = color(255, 0, 255);
+        colorCyan = color(0, 255, 255);
+        colorPurple = color(138, 43, 226);
+    }
+
+    function draw() {
+        clear(); // Transparent background
+        translate(width / 2, height / 2);
+
+        // Lock random seed so the structure stays perfectly stable
+        randomSeed(999); 
+
+        // 1. FIBER OPTIC HALO
+        drawFiberOpticHalo();
+
+        // 2. WOVEN LIGHT BEAMS
+        drawWovenEyeShape();
+
+        // 3. INNER MANDALA
+        drawInnerMandala();
+
+        // 4. THE OCTAGON PUPIL
+        drawOctagonPupil();
+    }
+
+    function drawFiberOpticHalo() {
+        // Optimized: Reduced from 180 to 120. Still looks dense but renders 33% faster.
+        let numRays = 120; 
+        
+        for (let a = 0; a < 360; a += (360 / numRays)) {
+            if ((a > 345 || a < 15) || (a > 165 && a < 195)) continue;
+
+            let isMagenta = random() > 0.5;
+            let col = isMagenta ? colorMagenta : colorCyan;
+            
+            let rStart = random(100, 180);
+            let rEnd = rStart + random(80, 220);
+            
+            let x1 = rStart * cos(a);
+            let y1 = rStart * sin(a) * 0.8;
+            let x2 = rEnd * cos(a);
+            let y2 = rEnd * sin(a) * 0.8;
+
+            let offset = sin(frameCount * 2 + a * 5) * 8;
+            x2 += cos(a) * offset;
+            y2 += sin(a) * offset;
+
+            col.setAlpha(random(100, 255));
+            stroke(col);
+            strokeWeight(random(1, 2));
+            
+            // Optimized: Reduced shadowBlur intensity (heavy operation)
+            drawingContext.shadowBlur = 5; 
+            drawingContext.shadowColor = col;
+
+            line(x1, y1, x2, y2);
+
+            col.setAlpha(255);
+            fill(col);
+            noStroke();
+            circle(x2, y2, random(3, 6));
+        }
+    }
+
+    function drawWovenEyeShape() {
+        noFill();
+        // Optimized: Reduced from 100 to 60 strands. Fills shape well but much faster.
+        let numStrands = 60; 
+
+        for (let i = 0; i < numStrands; i++) {
+            let isMagenta = random() > 0.5;
+            let col = isMagenta ? colorMagenta : colorCyan;
+            
+            col.setAlpha(random(80, 220));
+            stroke(col);
+            // Slightly thicker lines to make up for fewer strands
+            strokeWeight(random(1.5, 4)); 
+            
+            // Optimized blur
+            drawingContext.shadowBlur = 8;
+            drawingContext.shadowColor = col;
+
+            let startX = -360 + random(-20, 20);
+            let endX = 360 + random(-20, 20);
+
+            let isTop = random() > 0.5;
+            let dir = isTop ? -1 : 1;
+
+            let cp1x = -150 + random(-60, 60);
+            let cp1y = (random(150, 350)) * dir;
+            let cp2x = 150 + random(-60, 60);
+            let cp2y = (random(150, 350)) * dir;
+
+            let breathe = sin(frameCount * 1.5 + i * 10) * 12;
+            cp1y += breathe * dir;
+            cp2y += breathe * dir;
+
+            bezier(startX, random(-5, 5), cp1x, cp1y, cp2x, cp2y, endX, random(-5, 5));
+        }
+    }
+
+    function drawInnerMandala() {
+        push();
+        rotate(frameCount * 0.2);
+
+        // Optimized: Reduced from 90 to 50
+        for (let i = 0; i < 50; i++) {
+            let a = random(360);
+            let rStart = 65; 
+            let rEnd = random(80, 180);
+
+            let x1 = rStart * cos(a);
+            let y1 = rStart * sin(a);
+            let x2 = rEnd * cos(a);
+            let y2 = rEnd * sin(a);
+
+            let isCyan = random() > 0.4;
+            let col = isCyan ? colorCyan : colorMagenta;
+            
+            stroke(col);
+            strokeWeight(random(1, 2.5));
+            drawingContext.shadowBlur = 5; // Optimized
+            drawingContext.shadowColor = col;
+
+            let midX = ((x1 + x2) / 2) + random(-15, 15);
+            let midY = ((y1 + y2) / 2) + random(-15, 15);
+            
+            noFill();
+            beginShape();
+            vertex(x1, y1);
+            vertex(midX, midY);
+            vertex(x2, y2);
+            endShape();
+        }
+        pop();
+    }
+
+    function drawOctagonPupil() {
+        fill(5, 0, 15); 
+        
+        stroke(255, 0, 255);
+        strokeWeight(4);
+        drawingContext.shadowBlur = 15; // Optimized
+        drawingContext.shadowColor = color(255, 0, 255);
+        
+        let rOctOuter = 65;
+        beginShape();
+        for (let a = 0; a < 360; a += 45) { 
+            let ang = a + 22.5; 
+            vertex(rOctOuter * cos(ang), rOctOuter * sin(ang));
+        }
+        endShape(CLOSE);
+
+        noFill();
+        stroke(0, 255, 255);
+        strokeWeight(2);
+        drawingContext.shadowBlur = 10; // Optimized
+        drawingContext.shadowColor = color(0, 255, 255);
+        
+        let rOctInner = 52;
+        beginShape();
+        for (let a = 0; a < 360; a += 45) {
+            let ang = a + 22.5;
+            vertex(rOctInner * cos(ang), rOctInner * sin(ang));
+        }
+        endShape(CLOSE);
+    }
+
+    /* =========================================
+       STANDARD UI JAVASCRIPT
+       ========================================= */
+
+    window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) document.body.classList.add('scrolled');
+        else document.body.classList.remove('scrolled');
+    });
+
+    const p5Container = document.getElementById('p5-eye-container');
+    document.addEventListener('mousemove', (e) => {
+        if (!document.body.classList.contains('scrolled')) {
+            const x = (window.innerWidth / 2 - e.pageX) / 40; 
+            const y = (window.innerHeight / 2 - e.pageY) / 40;
+            p5Container.style.transform = `rotateY(${-x}deg) rotateX(${y}deg)`;
+        }
+    });
+
+    (function() {
+        const canvas = document.getElementById('cursor-grid');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        
+        // Performance Fix: Increased spacing from 50 to 70 to draw fewer dots
+        const spacing = 70; 
+        let mouseX = -100, mouseY = -100;
+
+        // Pre-calculate pi to save computations in the render loop
+        const PI2 = Math.PI * 2;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        document.addEventListener('mousemove', (e) => {
+            mouseX = e.clientX;
+            mouseY = e.clientY;
+        });
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            
+            for (let x = 0; x < width + spacing; x += spacing) {
+                for (let y = 0; y < height + spacing; y += spacing) {
+                    const dx = x - mouseX;
+                    const dy = y - mouseY;
+                    // Note: Math.hypot is slightly faster than Math.sqrt on some engines, but this is fine
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    const maxDist = 200;
+                    
+                    let alpha = 0.1, size = 1;
+
+                    if (dist < maxDist) {
+                        alpha = 0.1 + (1 - dist / maxDist) * 0.4; 
+                        size = 1 + (1 - dist / maxDist) * 1.5;
+                        
+                        if (dist < 100) {
+                            ctx.beginPath();
+                            ctx.moveTo(x, y);
+                            ctx.lineTo(mouseX, mouseY);
+                            ctx.strokeStyle = `rgba(255, 0, 255, ${0.3 * (1 - dist/100)})`; 
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        }
+                    }
+                    ctx.fillStyle = `rgba(0, 255, 255, ${alpha})`; 
+                    ctx.beginPath();
+                    ctx.arc(x, y, size, 0, PI2); // Use pre-calculated PI2
+                    ctx.fill();
+                }
+            }
+            requestAnimationFrame(draw);
+        }
+        draw();
+    })();
+{% endraw %}
+</script>
+
+{% endblock %}

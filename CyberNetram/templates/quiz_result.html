@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container mt-5 text-center">
+    <div class="card shadow p-5 border-0">
+        <h6 class="text-muted text-uppercase mb-3">Assessment Complete</h6>
+        
+        <!-- Score Display -->
+        <h1 class="display-1 fw-bold mb-0 text-primary">{{ score }}<span class="text-muted fs-4">/{{ total }}</span></h1>
+        
+        <!-- Rank Badge -->
+        <div class="my-4">
+            <span class="badge bg-dark fs-4 p-3 rounded-pill shadow-sm">
+                <i class="fas fa-user-ninja me-2 text-warning"></i> Rank: {{ rank }}
+            </span>
+        </div>
+
+        <!-- Rank Feedback Logic -->
+        {% if rank == "Cyber Ninja Master" %}
+            <div class="alert alert-success shadow-sm">
+                <i class="fas fa-trophy fa-2x mb-2 d-block"></i>
+                <strong>PERFECT!</strong> You have mastered the art of cyber defense. You are ready to protect others.
+            </div>
+        {% elif rank == "Security Expert" %}
+            <div class="alert alert-info shadow-sm">
+                <i class="fas fa-medal fa-2x mb-2 d-block"></i>
+                <strong>Great Job!</strong> You know your stuff, but you missed a few subtle details.
+            </div>
+        {% elif rank == "Apprentice" %}
+            <div class="alert alert-warning shadow-sm">
+                <i class="fas fa-book-reader fa-2x mb-2 d-block"></i>
+                <strong>Not bad.</strong> You have the basics, but you are still vulnerable to advanced attacks.
+            </div>
+        {% else %}
+            <div class="alert alert-danger shadow-sm">
+                <i class="fas fa-exclamation-triangle fa-2x mb-2 d-block"></i>
+                <strong>Critical Risk!</strong> Your cyber hygiene needs immediate improvement. Please study the Knowledge Hub.
+            </div>
+        {% endif %}
+
+        <!-- Detailed Review Section -->
+        <div class="text-start mt-5">
+            <h4 class="border-bottom pb-3 mb-4">Review Your Answers:</h4>
+            <div class="list-group list-group-flush">
+                {% for r in results %}
+                <div class="list-group-item py-3">
+                    <p class="mb-2 fw-bold text-dark">{{ loop.index }}. {{ r.question }}</p>
+                    
+                    {% if r.is_correct %}
+                        <div class="d-flex align-items-center text-success bg-success bg-opacity-10 p-2 rounded">
+                            <i class="fas fa-check-circle me-3 fa-lg"></i> 
+                            <div>
+                                <strong>Your Answer:</strong> {{ r.user_answer }}
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="d-flex align-items-center text-danger bg-danger bg-opacity-10 p-2 rounded mb-2">
+                            <i class="fas fa-times-circle me-3 fa-lg"></i> 
+                            <div>
+                                <strong>Your Answer:</strong> {{ r.user_answer }}
+                            </div>
+                        </div>
+                        <div class="ms-5 small text-success fw-bold">
+                            <i class="fas fa-arrow-right me-1"></i> Correct Answer: {{ r.correct_answer }}
+                        </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="mt-5 d-flex justify-content-center gap-3">
+            <a href="/quiz" class="btn btn-outline-secondary rounded-pill px-4 btn-lg">
+                <i class="fas fa-redo me-2"></i> Retry Quiz
+            </a>
+            <a href="/learn" class="btn btn-primary rounded-pill px-4 btn-lg">
+                <i class="fas fa-graduation-cap me-2"></i> Study Knowledge Hub
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

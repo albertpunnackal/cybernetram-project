@@ -1,0 +1,610 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Include Bootstrap & FontAwesome to ensure all dependencies are defined -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<!-- GMAIL CLONE STYLES (Material Design Light Theme - Strict) -->
+<style>
+    :root {
+        /* PURE LIGHT MODE VARIABLES */
+        --gm-bg: #f6f8fc;            /* App Background */
+        --gm-surface: #ffffff;       /* Cards/Lists */
+        --gm-text-main: #000000;     /* Primary Text (Black) */
+        --gm-text-sub: #444746;      /* Secondary Text */
+        --gm-accent: #0b57d0;        /* Google Blue */
+        --gm-selected: #d3e3fd;      /* Selection Blue */
+        --gm-hover: #eaeef6;         /* Hover Gray */
+        --gm-border: #e7e7e7;        /* Subtle Borders */
+    }
+
+    /* Override base body strictly */
+    body {
+        background-color: var(--gm-bg) !important;
+        color: var(--gm-text-main) !important;
+        font-family: 'Roboto', 'Arial', sans-serif;
+        overflow: hidden;
+    }
+
+    /* --- HEADER --- */
+    .gm-header {
+        height: 64px;
+        padding: 8px 20px;
+        display: flex;
+        align-items: center;
+        background: var(--gm-bg); /* Match body */
+        border-bottom: none;
+    }
+    
+    .gm-logo {
+        font-size: 22px;
+        color: #5f6368;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        width: 250px;
+    }
+    
+    .gm-search-bar {
+        background: #eaf1fb;
+        border-radius: 24px;
+        height: 48px;
+        flex: 1;
+        max-width: 720px;
+        display: flex;
+        align-items: center;
+        padding: 0 20px;
+        margin: 0 20px;
+    }
+    .gm-search-bar input {
+        background: transparent;
+        border: none;
+        color: #000;
+        width: 100%;
+        margin-left: 10px;
+        outline: none;
+    }
+
+    /* --- LAYOUT CONTAINER --- */
+    .gm-container {
+        display: flex;
+        height: calc(100vh - 64px);
+    }
+
+    /* --- SIDEBAR (Fixed Color) --- */
+    .gm-sidebar {
+        width: 260px;
+        padding: 10px 0;
+        display: flex;
+        flex-direction: column;
+        background: var(--gm-bg); /* Ensure light background */
+    }
+
+    .gm-compose-btn {
+        background: #c2e7ff;
+        color: #001d35;
+        border: none;
+        border-radius: 16px;
+        height: 56px;
+        width: 140px;
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 0 20px;
+        margin-left: 16px;
+        margin-bottom: 16px;
+        font-weight: 500;
+        font-size: 14px;
+        cursor: pointer;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .gm-nav-item {
+        display: flex;
+        align-items: center;
+        padding: 0 12px 0 26px;
+        height: 32px;
+        border-radius: 0 16px 16px 0;
+        color: #000000; /* FORCE BLACK TEXT */
+        cursor: pointer;
+        font-size: 14px;
+        margin-right: 16px;
+        font-weight: 500;
+    }
+    .gm-nav-item:hover { background: var(--gm-hover); }
+    .gm-nav-item.active {
+        background: var(--gm-selected);
+        color: #001d35; /* Dark blue for active */
+        font-weight: 700;
+    }
+    .gm-nav-item i { width: 40px; font-size: 18px; color: #444746; }
+    .gm-nav-item.active i { color: #001d35; }
+
+    /* --- EMAIL LIST --- */
+    .gm-email-list {
+        width: 350px;
+        background: var(--gm-surface);
+        border-radius: 16px;
+        margin: 0 8px 8px 0;
+        overflow-y: auto;
+        border: none;
+    }
+
+    .gm-email-item {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--gm-border);
+        cursor: pointer;
+        background: var(--gm-surface);
+    }
+    .gm-email-item:hover { background: var(--gm-hover); }
+    .gm-email-item.active {
+        background: var(--gm-selected);
+        color: #000 !important;
+    }
+
+    .gm-sender { font-weight: 700; font-size: 15px; color: #000000; margin-bottom: 2px; }
+    .gm-subject { font-weight: 400; font-size: 14px; color: #000000; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .gm-snippet { font-size: 13px; color: #5e5e5e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+    /* --- READING PANE --- */
+    .gm-view {
+        flex: 1;
+        background: var(--gm-surface);
+        border-radius: 16px;
+        margin: 0 16px 16px 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .gm-toolbar {
+        height: 48px;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--gm-border);
+    }
+    
+    .gm-icon-btn {
+        background: none; border: none; color: #444746;
+        width: 40px; height: 40px; border-radius: 50%;
+        cursor: pointer;
+    }
+    .gm-icon-btn:hover { background: rgba(0,0,0,0.05); color: #000; }
+
+    .gm-content-scroll {
+        flex: 1;
+        overflow-y: auto;
+        padding: 24px;
+        color: #000000; /* Force Black Body Text */
+    }
+
+    .gm-email-title { font-size: 22px; margin-bottom: 20px; color: #000; }
+    
+    /* INVESTIGATION & INTERACTION */
+    .investigate-btn {
+        border: 1px solid transparent;
+        border-radius: 4px;
+        transition: 0.2s;
+        color: #000; /* Ensure text is black */
+    }
+    .investigation-active .investigate-btn {
+        cursor: pointer;
+        border: 1px dashed #999;
+    }
+    .investigation-active .investigate-btn:hover {
+        background: rgba(11, 87, 208, 0.1);
+        border-color: var(--gm-accent);
+    }
+    .investigate-btn.selected {
+        background: rgba(234, 67, 53, 0.15) !important;
+        border-color: #ea4335 !important;
+    }
+
+    /* URL PREVIEW */
+    #url-preview-bar {
+        position: fixed;
+        bottom: 0; left: 0;
+        background: #e1e3e1;
+        color: #1f1f1f;
+        padding: 4px 12px;
+        font-size: 13px;
+        border-top-right-radius: 4px;
+        border: 1px solid #c4c7c5;
+        z-index: 9999;
+        display: none;
+    }
+
+    /* MODAL (Force Dark for Contrast Pop-up) */
+    .modal-content {
+        background-color: #1f1f1f !important;
+        color: #e3e3e3 !important;
+        border: 1px solid #444;
+    }
+
+</style>
+
+<!-- HEADER -->
+<div class="gm-header">
+    <div class="gm-logo">
+        <a href="/" style="color: inherit; text-decoration: none;">
+            <i class="fas fa-arrow-left" style="padding: 12px; margin-right: 10px; cursor: pointer;"></i>
+        </a>
+        <img src="https://ssl.gstatic.com/ui/v1/icons/mail/rfr/logo_gmail_lockup_default_1x_r5.png" alt="Gmail" style="height:24px; opacity:0.8;">
+    </div>
+    
+    <div class="gm-search-bar">
+        <i class="fas fa-search text-muted"></i>
+        <input type="text" placeholder="Search mail">
+        <i class="fas fa-sliders-h text-muted" style="cursor: pointer;"></i>
+    </div>
+    
+    <div class="ms-auto d-flex align-items-center gap-3">
+        <i class="far fa-question-circle text-secondary" style="font-size: 20px;" onclick="new bootstrap.Modal(document.getElementById('rulesModal')).show()"></i>
+        <i class="fas fa-cog text-secondary" style="font-size: 20px;"></i>
+        <div class="rounded-circle text-white d-flex align-items-center justify-content-center fw-bold" 
+             style="width: 32px; height: 32px; background: #7b1fa2;">U</div>
+    </div>
+</div>
+
+<div class="gm-container">
+    
+    <!-- SIDEBAR -->
+    <div class="gm-sidebar d-none d-md-flex">
+        <button class="gm-compose-btn">
+            <i class="fas fa-pen"></i> Compose
+        </button>
+        
+        <div class="gm-nav-item active">
+            <i class="fas fa-inbox"></i> Inbox
+            <span class="ms-auto fw-bold text-dark small">{{ emails|length }}</span>
+        </div>
+        <div class="gm-nav-item"><i class="far fa-star"></i> Starred</div>
+        <div class="gm-nav-item"><i class="far fa-clock"></i> Snoozed</div>
+        <div class="gm-nav-item"><i class="fas fa-paper-plane"></i> Sent</div>
+        <div class="gm-nav-item"><i class="fas fa-file"></i> Drafts</div>
+    </div>
+
+    <!-- EMAIL LIST -->
+    <div class="gm-email-list">
+        {% for email in emails %}
+        <div class="gm-email-item" onclick="loadEmail({{ email.id }}, this)">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="gm-sender">{{ email.sender_name }}</div>
+                <small class="text-muted" style="font-size: 11px;">10:42 AM</small>
+            </div>
+            <div class="gm-subject">{{ email.subject }}</div>
+            <!-- Added striptags to prevent HTML from rendering weirdly in the sidebar -->
+            <div class="gm-snippet">{{ email.body_top | striptags | truncate(50) }}</div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- READING PANE -->
+    <div class="gm-view" id="email-view-area">
+        <div class="h-100 d-flex flex-column justify-content-center align-items-center text-muted">
+            <i class="fas fa-envelope-open fa-3x mb-3 opacity-25"></i>
+            <div>Select an email to read</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- URL PREVIEW BAR -->
+<div id="url-preview-bar">example.com</div>
+
+<!-- STARTUP RULES MODAL -->
+<div class="modal fade" id="rulesModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold text-success"><i class="fas fa-shield-alt me-2"></i> Phishing Sandbox Rules</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <p>Your goal is to become a <strong>Human Firewall</strong> by analyzing simulated emails.</p>
+                <ol style="line-height: 1.8;">
+                    <li>Select an email from your Inbox.</li>
+                    <li>If the email looks legitimate, click <strong>'Mark as Safe'</strong>.</li>
+                    <li>If it is a scam, click <strong>'Report Phishing'</strong> to activate Investigation Mode.</li>
+                    <li>Click on suspicious parts (Sender address, Links, or Text) to highlight evidence, then <strong>Submit Report</strong>.</li>
+                </ol>
+                <div class="alert alert-danger mt-3 mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Tip: Hover over links to read the true URL. Do NOT click the links inside the email unless you are sure they are safe!
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-primary w-100 fw-bold" data-bs-dismiss="modal">Acknowledge & Start</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- RESULT MODAL -->
+<div class="modal fade" id="resultModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title fw-bold" id="resultTitle">Verdict</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-3">
+                    <i id="resultIcon" class="fas fa-check-circle fa-4x text-success"></i>
+                </div>
+                <h4 class="text-center fw-bold mb-3" id="resultMsg">Result</h4>
+                <div class="p-3 rounded" style="background: rgba(255,255,255,0.05);">
+                    <p id="resultExplanation" style="color:#ccc;" class="mb-2">Details...</p>
+                    <hr class="border-secondary">
+                    <small style="color:#fdd663;"><i class="fas fa-lightbulb me-2"></i><span id="resultTip">Tip...</span></small>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Continue Training</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Injection -->
+<script id="email-data" type="application/json">
+    {{ emails | tojson }}
+</script>
+
+<script>
+    let emails = [];
+    try {
+        emails = JSON.parse(document.getElementById('email-data').textContent);
+    } catch (e) {
+        console.warn("Could not load email data.");
+    }
+
+    let currentEmailId = null;
+    let selectedZones = [];
+    let isInvestigationMode = false;
+    let pendingVerdict = null;
+
+    // Show rules automatically on load
+    window.onload = function() {
+        if (typeof bootstrap !== 'undefined') {
+            const rulesModal = new bootstrap.Modal(document.getElementById('rulesModal'));
+            rulesModal.show();
+        } else {
+            console.error("Bootstrap is still not loaded properly.");
+        }
+    };
+
+    // 1. LOAD EMAIL
+    function loadEmail(id, element) {
+        currentEmailId = id;
+        selectedZones = [];
+        isInvestigationMode = false;
+        pendingVerdict = null;
+
+        document.querySelectorAll('.gm-email-item').forEach(el => el.classList.remove('active'));
+        if(element) element.classList.add('active');
+
+        const email = emails.find(e => e.id === id);
+        
+        // Random Avatar Colors
+        const colors = ['#0b57d0', '#1e8e3e', '#d93025', '#e67c73', '#f4b400', '#8e24aa'];
+        const avatarColor = colors[email.sender_name.length % colors.length];
+
+        const viewArea = document.getElementById('email-view-area');
+        viewArea.innerHTML = `
+            <!-- Toolbar -->
+            <div class="gm-toolbar" id="gm-toolbar-actions">
+                <div class="d-flex gap-1">
+                    <button class="gm-icon-btn"><i class="fas fa-arrow-left"></i></button>
+                    <button class="gm-icon-btn"><i class="fas fa-archive"></i></button>
+                    <button class="gm-icon-btn"><i class="fas fa-trash"></i></button>
+                    <button class="gm-icon-btn"><i class="fas fa-envelope-open"></i></button>
+                </div>
+                
+                <!-- Initial Actions -->
+                <div class="d-flex align-items-center gap-2" id="initial-actions">
+                    <button class="btn btn-sm btn-outline-success fw-bold" onclick="startInvestigation('safe')">
+                        <i class="fas fa-check me-1"></i> Mark Safe
+                    </button>
+                    <button class="btn btn-sm btn-danger fw-bold" onclick="startInvestigation('phishing')">
+                        <i class="fas fa-exclamation-circle me-1"></i> Report Phishing
+                    </button>
+                </div>
+
+                <!-- Investigation Actions (Hidden Initially) -->
+                <div class="d-flex align-items-center gap-2" id="investigation-actions" style="display:none !important;">
+                    <span class="text-danger fw-bold small me-2">INVESTIGATION MODE</span>
+                    <button class="btn btn-sm btn-outline-secondary" onclick="cancelInvestigation()">Cancel</button>
+                    <div class="vr mx-2"></div>
+                    <!-- Dynamic Submit Button based on choice -->
+                    <button class="btn btn-sm fw-bold" id="final-submit-btn" onclick="submitPendingVerdict()">Submit</button>
+                </div>
+            </div>
+
+            <!-- Email Body -->
+            <div class="gm-content-scroll" id="email-content">
+                <div class="gm-email-title">${email.subject}</div>
+                
+                <div class="d-flex align-items-start" style="margin-bottom: 24px;">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold me-3" 
+                         style="width:40px; height:40px; background:${avatarColor}; font-size:18px;">
+                        ${email.sender_name.charAt(0)}
+                    </div>
+                    <div>
+                        <div class="d-flex align-items-center">
+                            <span class="fw-bold me-2 investigate-btn" 
+                                  style="color: #000000; font-size: 15px;" 
+                                  onclick="selectZone('zone-sender', this)"
+                                  title="Sender Address">${email.sender_name}</span>
+                            <span class="text-muted small">&lt;${email.sender_email}&gt;</span>
+                        </div>
+                        <div class="text-muted small">to me <i class="fas fa-caret-down"></i></div>
+                    </div>
+                    <div class="ms-auto text-muted small">
+                        10:42 AM <button class="gm-icon-btn d-inline-flex"><i class="fas fa-star"></i></button>
+                    </div>
+                </div>
+
+                <div class="mt-4" style="font-size: 14px; line-height: 1.6; color: #000;">
+                    <div class="investigate-btn p-1 mb-3" onclick="selectZone('zone-body', this)" title="Email Content">
+                        ${email.body_top}
+                    </div>
+
+                    <div class="my-4">
+                        <a href="${email.real_link}" class="btn btn-primary investigate-btn px-4 py-2 fw-bold" 
+                           onclick="handleLinkClick(event, this)"
+                           onmouseenter="showUrl('${email.real_link}')"
+                           onmouseleave="hideUrl()"
+                           title="Embedded Link"
+                           style="background-color: #0b57d0; border: none; font-size: 14px; border-radius: 18px;">
+                            ${email.link_text}
+                        </a>
+                    </div>
+
+                    <div class="text-muted mt-5 pt-3 border-top investigate-btn p-1" style="border-color: #e7e7e7 !important;" onclick="selectZone('zone-body', this)" title="Email Footer">
+                        ${email.body_bottom}
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    // 2. START INVESTIGATION FLOW
+    function startInvestigation(intent) {
+        isInvestigationMode = true;
+        pendingVerdict = intent;
+        
+        document.getElementById('email-content').classList.add('investigation-active');
+        document.getElementById('initial-actions').style.setProperty('display', 'none', 'important');
+        const invActions = document.getElementById('investigation-actions');
+        invActions.style.setProperty('display', 'flex', 'important');
+
+        // Update Submit Button Style
+        const btn = document.getElementById('final-submit-btn');
+        if (intent === 'safe') {
+            btn.className = "btn btn-sm btn-success fw-bold";
+            btn.innerHTML = "<i class='fas fa-check me-1'></i> Confirm Safe";
+        } else {
+            btn.className = "btn btn-sm btn-danger fw-bold";
+            btn.innerHTML = "<i class='fas fa-paper-plane me-1'></i> Submit Phishing Report";
+        }
+    }
+
+    // 3. CANCEL FLOW
+    function cancelInvestigation() {
+        isInvestigationMode = false;
+        pendingVerdict = null;
+        selectedZones = [];
+        
+        document.getElementById('email-content').classList.remove('investigation-active');
+        document.querySelectorAll('.investigate-btn').forEach(el => el.classList.remove('selected'));
+        
+        document.getElementById('investigation-actions').style.setProperty('display', 'none', 'important');
+        document.getElementById('initial-actions').style.display = 'flex';
+    }
+
+    // 4. ZONE SELECTION
+    function selectZone(zoneName, element) {
+        if (!isInvestigationMode) return;
+        
+        if (selectedZones.includes(zoneName)) {
+            selectedZones = selectedZones.filter(z => z !== zoneName);
+            element.classList.remove('selected');
+        } else {
+            selectedZones.push(zoneName);
+            element.classList.add('selected');
+        }
+    }
+
+    // 5. LINK CLICK HANDLER
+    function handleLinkClick(event, element) {
+        event.preventDefault(); // Stop from navigating away!
+        event.stopPropagation();
+        hideUrl();
+
+        if (isInvestigationMode) {
+            selectZone('zone-link', element);
+        } else {
+            submitVerdict('safe', 'link_click');
+        }
+    }
+
+    // 6. SUBMIT PENDING VERDICT
+    function submitPendingVerdict() {
+        if (pendingVerdict) {
+            submitVerdict(pendingVerdict, 'manual_submit');
+        }
+    }
+
+    // 7. URL PREVIEW
+    function showUrl(url) {
+        const bar = document.getElementById('url-preview-bar');
+        bar.innerText = url;
+        bar.style.display = 'block';
+    }
+    
+    function hideUrl() {
+        document.getElementById('url-preview-bar').style.display = 'none';
+    }
+
+    // 8. SERVER SUBMISSION
+    function submitVerdict(verdict, trigger) {
+        if (verdict === 'phishing' && selectedZones.length === 0) {
+            alert("⚠️ Please click on the suspicious parts of the email (Sender, Link, or Body) before submitting.");
+            return;
+        }
+
+        fetch('/analyze_evidence', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                email_id: currentEmailId,
+                selected_zones: selectedZones,
+                verdict: verdict
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            let modalTitle = data.title;
+            let modalMsg = data.msg;
+            let iconClass = "";
+            let textClass = "";
+
+            if (trigger === 'link_click' && !data.success) {
+                 modalTitle = "System Compromised!";
+                 modalMsg = "You clicked a phishing link!";
+                 iconClass = "fas fa-skull-crossbones fa-4x text-danger";
+                 textClass = "fw-bold mb-3 text-danger";
+            } else {
+                if (data.success) {
+                    iconClass = "fas fa-check-circle fa-4x text-success";
+                    textClass = "fw-bold mb-3 text-success";
+                } else {
+                    iconClass = "fas fa-times-circle fa-4x text-danger";
+                    textClass = "fw-bold mb-3 text-danger";
+                }
+            }
+
+            document.getElementById('resultIcon').className = iconClass;
+            document.getElementById('resultMsg').className = textClass;
+            document.getElementById('resultTitle').innerText = modalTitle;
+            document.getElementById('resultMsg').innerText = modalMsg;
+            document.getElementById('resultExplanation').innerHTML = data.explanation;
+            document.getElementById('resultTip').innerText = data.tips;
+
+            new bootstrap.Modal(document.getElementById('resultModal')).show();
+            cancelInvestigation(); 
+        })
+        .catch(err => {
+            console.error("Submission Error:", err);
+            alert("Error submitting verdict. Please check server connection.");
+        });
+    }
+</script>
+
+{% endblock %}

@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Confetti Library -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+
+<style>
+    /* --- CYBERPUNK THEME --- */
+    :root {
+        --neon-blue: #00f3ff;
+        --neon-green: #0aff0a;
+        --neon-red: #ff0055;
+        --dark-bg: #0a0a12;
+        --card-bg: #161623;
+    }
+
+    /* Force dark mode for the game */
+    body {
+        background-color: var(--dark-bg) !important;
+        color: white;
+        transition: background-color 0.5s ease;
+    }
+
+    /* --- RED SCREEN OF DEATH ANIMATION --- */
+    body.system-failure {
+        background-color: #2a0000 !important; /* Deep Blood Red */
+        animation: alarmPulse 0.8s infinite alternate;
+    }
+
+    @keyframes alarmPulse {
+        from { box-shadow: inset 0 0 0 0 rgba(255, 0, 0, 0); }
+        to { box-shadow: inset 0 0 100px 50px rgba(255, 0, 0, 0.6); }
+    }
+
+    .game-wrapper {
+        max-width: 800px;
+        margin: 0 auto;
+        min-height: 80vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    /* START SCREEN */
+    #start-screen { text-align: center; animation: fadeIn 1s; }
+    .mission-card {
+        background: linear-gradient(145deg, #1c1c2e, #11111b);
+        border: 2px solid var(--neon-blue);
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0 0 20px rgba(0, 243, 255, 0.2);
+    }
+    
+    /* Failure Card Style */
+    .mission-card.failure {
+        border-color: var(--neon-red);
+        box-shadow: 0 0 30px rgba(255, 0, 85, 0.4);
+    }
+
+    .pulse-btn {
+        background: var(--neon-blue);
+        color: black;
+        font-weight: 900;
+        font-size: 1.5rem;
+        padding: 15px 50px;
+        border-radius: 50px;
+        border: none;
+        box-shadow: 0 0 15px var(--neon-blue);
+        transition: transform 0.2s;
+        animation: pulse 2s infinite;
+    }
+    .pulse-btn:hover { transform: scale(1.05); }
+
+    /* HUD */
+    #game-interface { display: none; }
+    .hud {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+        padding: 10px 20px;
+        background: rgba(255,255,255,0.05);
+        border-radius: 15px;
+    }
+    .shields { font-size: 1.5rem; color: var(--neon-red); }
+    .score-badge { font-size: 1.2rem; font-weight: bold; color: var(--neon-green); }
+
+    /* Timer */
+    .timer-container { width: 100%; height: 8px; background: #333; border-radius: 4px; margin-bottom: 30px; overflow: hidden; }
+    .timer-bar { height: 100%; width: 100%; background: var(--neon-green); transition: width 1s linear, background 0.3s; }
+
+    /* Question */
+    .question-card {
+        background: var(--card-bg);
+        border-radius: 20px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        margin-bottom: 30px;
+    }
+    .q-text { font-size: 1.4rem; font-weight: 600; line-height: 1.5; }
+
+    /* Options */
+    .options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+    .option-btn {
+        background: rgba(255,255,255,0.1);
+        border: 2px solid transparent;
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: 0.2s;
+        text-align: left;
+    }
+    .option-btn:hover { background: rgba(255,255,255,0.2); border-color: var(--neon-blue); }
+    
+    /* State Classes */
+    .correct { background: #0f5132 !important; border-color: var(--neon-green) !important; box-shadow: 0 0 15px var(--neon-green); }
+    .wrong { background: #842029 !important; border-color: var(--neon-red) !important; animation: shake 0.5s; }
+
+    /* END SCREEN */
+    #end-screen { display: none; text-align: center; color: white; }
+    .rank-display { font-size: 3rem; font-weight: 800; margin: 20px 0; color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
+
+    /* Keyframes */
+    @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0.7); } 70% { box-shadow: 0 0 0 10px rgba(0, 243, 255, 0); } 100% { box-shadow: 0 0 0 0 rgba(0, 243, 255, 0); } }
+    @keyframes shake { 0% { transform: translateX(0); } 25% { transform: translateX(-10px); } 50% { transform: translateX(10px); } 75% { transform: translateX(-10px); } 100% { transform: translateX(0); } }
+</style>
+
+<div class="game-wrapper">
+    
+    <!-- START SCREEN -->
+    <div id="start-screen">
+        <div class="mission-card">
+            <h1 class="display-4 fw-bold mb-3"><i class="fas fa-user-secret"></i> CYBER SURVIVAL</h1>
+            <p class="lead text-muted mb-4">Mission: Defend the network from 10 incoming threats.</p>
+            <div class="d-flex justify-content-center gap-4 mb-5">
+                <div class="text-center"><i class="fas fa-clock fa-2x mb-2 text-warning"></i><br><small>15s / Question</small></div>
+                <div class="text-center"><i class="fas fa-shield-alt fa-2x mb-2 text-danger"></i><br><small>3 Lives Only</small></div>
+            </div>
+            <button class="pulse-btn" onclick="startGame()">INITIATE SEQUENCE</button>
+        </div>
+    </div>
+
+    <!-- GAME HUD -->
+    <div id="game-interface">
+        <div class="hud">
+            <div class="shields" id="lives-display">
+                <i class="fas fa-shield-alt"></i> <i class="fas fa-shield-alt"></i> <i class="fas fa-shield-alt"></i>
+            </div>
+            <div class="score-badge">SCORE: <span id="score">0</span></div>
+        </div>
+        <div class="timer-container"><div class="timer-bar" id="timer-bar"></div></div>
+        <div class="question-card">
+            <span class="badge bg-secondary mb-3">Threat <span id="q-number">1</span>/10</span>
+            <div class="q-text" id="q-text">Loading...</div>
+        </div>
+        <div class="options-grid" id="options-container"></div>
+    </div>
+
+    <!-- END SCREEN -->
+    <div id="end-screen">
+        <div class="mission-card" id="end-card">
+            <div id="end-icon" class="display-1 mb-3"></div>
+            <h2 id="end-title">MISSION COMPLETE</h2>
+            <div class="rank-display" id="end-rank">CYBER NINJA</div>
+            <p class="lead" id="end-msg">You secured the network.</p>
+            <p>Final Score: <span id="final-score" class="fw-bold text-info"></span>/10</p>
+            <div class="mt-4">
+                <button class="btn btn-outline-light btn-lg rounded-pill px-5" onclick="location.reload()">Replay</button>
+                <a href="/" class="btn btn-primary btn-lg rounded-pill px-5">Dashboard</a>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+<!-- DATA INJECTION (Using script block to prevent syntax errors) -->
+<script id="quiz-data" type="application/json">
+    {{ questions | tojson | safe }}
+</script>
+
+<script>
+    // Load Questions
+    const questions = JSON.parse(document.getElementById('quiz-data').textContent);
+    
+    // Game State
+    let currentQIndex = 0;
+    let score = 0;
+    let lives = 3;
+    let timerInterval;
+    let timeLeft = 15;
+    
+    function startGame() {
+        document.getElementById('start-screen').style.display = 'none';
+        document.getElementById('game-interface').style.display = 'block';
+        loadQuestion();
+    }
+
+    function loadQuestion() {
+        if (currentQIndex >= questions.length) {
+            endGame(true);
+            return;
+        }
+        const q = questions[currentQIndex];
+        document.getElementById('q-number').innerText = currentQIndex + 1;
+        document.getElementById('q-text').innerText = q.q;
+        
+        resetTimer();
+        
+        const container = document.getElementById('options-container');
+        container.innerHTML = '';
+        q.options.forEach(opt => {
+            const btn = document.createElement('button');
+            btn.className = 'option-btn';
+            btn.innerText = opt;
+            btn.onclick = () => checkAnswer(btn, opt, q.answer);
+            container.appendChild(btn);
+        });
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        timeLeft = 15;
+        const bar = document.getElementById('timer-bar');
+        bar.style.width = '100%';
+        bar.style.backgroundColor = '#0aff0a'; // Reset green
+        
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            const pct = (timeLeft / 15) * 100;
+            bar.style.width = pct + '%';
+            
+            // Visual warning
+            if (timeLeft < 5) bar.style.backgroundColor = '#ff0055'; 
+            
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                handleTimeOut();
+            }
+        }, 1000);
+    }
+
+    function handleTimeOut() {
+        lives--;
+        updateLives();
+        
+        // Show correct answer even if timed out
+        document.querySelectorAll('.option-btn').forEach(btn => {
+            if (btn.innerText === questions[currentQIndex].answer) btn.classList.add('correct');
+            btn.disabled = true;
+        });
+
+        if (lives > 0) { setTimeout(() => { currentQIndex++; loadQuestion(); }, 2000); } 
+        else { endGame(false); }
+    }
+
+    function checkAnswer(btn, selected, correct) {
+        clearInterval(timerInterval);
+        document.querySelectorAll('.option-btn').forEach(b => b.disabled = true);
+        
+        if (selected === correct) {
+            score++;
+            document.getElementById('score').innerText = score * 100;
+            btn.classList.add('correct');
+            triggerConfetti(0.5);
+            setTimeout(() => { currentQIndex++; loadQuestion(); }, 1000);
+        } else {
+            lives--;
+            updateLives();
+            btn.classList.add('wrong');
+            // Show correct answer
+            document.querySelectorAll('.option-btn').forEach(b => {
+                if (b.innerText === correct) b.classList.add('correct');
+            });
+            
+            if (lives > 0) { setTimeout(() => { currentQIndex++; loadQuestion(); }, 2000); } 
+            else { setTimeout(() => endGame(false), 1000); }
+        }
+    }
+
+    function updateLives() {
+        const container = document.getElementById('lives-display');
+        let shields = '';
+        for(let i=0; i<lives; i++) shields += '<i class="fas fa-shield-alt"></i> ';
+        for(let i=0; i<(3-lives); i++) shields += '<i class="far fa-heart text-muted"></i> ';
+        container.innerHTML = shields;
+        
+        // Shake screen
+        document.querySelector('.game-wrapper').style.animation = 'shake 0.5s';
+        setTimeout(() => document.querySelector('.game-wrapper').style.animation = '', 500);
+    }
+
+    function endGame(victory) {
+        document.getElementById('game-interface').style.display = 'none';
+        document.getElementById('end-screen').style.display = 'block';
+        document.getElementById('final-score').innerText = score;
+        
+        const rankTitle = document.getElementById('end-rank');
+        const endIcon = document.getElementById('end-icon');
+        const msg = document.getElementById('end-msg');
+        const endCard = document.getElementById('end-card');
+
+        if (!victory) {
+            // --- RED SCREEN OF DEATH TRIGGER ---
+            document.body.classList.add('system-failure'); 
+            endCard.classList.add('failure');
+            
+            endIcon.innerHTML = '☠️';
+            rankTitle.innerText = "SYSTEM COMPROMISED";
+            rankTitle.style.color = "red";
+            msg.innerText = "The firewall has been breached. All data lost.";
+        } else {
+            endIcon.innerHTML = '🏆';
+            if (score === 10) {
+                rankTitle.innerText = "CYBER GOD";
+                msg.innerText = "Flawless defense. No threats detected.";
+                triggerConfetti(2);
+            } else if (score >= 7) {
+                rankTitle.innerText = "SECURITY EXPERT";
+                msg.innerText = "Solid defense. You saved the network.";
+                triggerConfetti(1);
+            } else {
+                rankTitle.innerText = "ROOKIE";
+                rankTitle.style.color = "orange";
+                msg.innerText = "You survived, but the network took damage.";
+            }
+        }
+    }
+
+    function triggerConfetti(duration) {
+        var end = Date.now() + (duration * 1000);
+        var colors = ['#00f3ff', '#0aff0a'];
+        (function frame() {
+            confetti({ particleCount: 5, angle: 60, spread: 55, origin: { x: 0 }, colors: colors });
+            confetti({ particleCount: 5, angle: 120, spread: 55, origin: { x: 1 }, colors: colors });
+            if (Date.now() < end) requestAnimationFrame(frame);
+        }());
+    }
+</script>
+
+{% endblock %}
